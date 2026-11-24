@@ -51,6 +51,18 @@
   .ok { color: #1a7f37; }
   .warn { color: #b26a00; }
   .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9rem; }
+  .finder { margin-top: 32px; }
+  .finder input[type="text"] {
+    font: inherit; width: 100%; box-sizing: border-box;
+    padding: 10px 12px; border-radius: 10px; border: 1px solid #888;
+    background: transparent; color: inherit;
+  }
+  .finder .info { word-break: break-all; }
+  .finder .info a { color: #2f7cf6; }
+  button.copybtn {
+    padding: 4px 10px; border-radius: 8px; font-size: .85rem;
+    background: #2f7cf6; color: #fff; border: 1px solid #888; cursor: pointer;
+  }
   footer { margin-top: 32px; font-size: .85rem; opacity: .6; }
 </style>
 </head>
@@ -74,6 +86,11 @@
   <div class="box"><img id="outImg" alt="Processed image preview"></div>
   <br>
   <a class="download" id="dl" href="#" download>Download PNG</a>
+</div>
+
+<div class="finder">
+  <input type="text" id="redditUrl" placeholder="Reddit post link" spellcheck="false" autocomplete="off" autocapitalize="off">
+  <div class="info" id="foundInfo"></div>
 </div>
 
 <footer>Tip: if the image already has transparency, Reddit should already keep it as a PNG — no need to run it through this.<br><br>Upload the downloaded file from the <b>Files</b> app (it lands in Downloads). If you pick it from Photos instead, your iPhone turns it back into a JPEG before Reddit ever sees it — and the trick is lost.</footer>
@@ -186,6 +203,88 @@ goBtn.addEventListener('click', () => {
     preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, 'image/png');
 });
+
+// --- Reddit link finder (bare input, no description) ---
+const redditUrl = document.getElementById('redditUrl');
+const foundInfo = document.getElementById('foundInfo');
+
+function unesc(s) { return s.replace(/&amp;/g, '&'); }
+
+function showDirect(url) {
+  foundInfo.innerHTML = '';
+  const a = document.createElement('a');
+  a.href = url; a.textContent = url; a.target = '_blank'; a.rel = 'noopener'; a.className = 'mono';
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.textContent = 'Copy'; btn.className = 'copybtn';
+  btn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = 'Copied';
+    } catch (e) {
+      const r = document.createRange(); r.selectNodeContents(a);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      try { document.execCommand('copy'); btn.textContent = 'Copied'; } catch (_) {}
+    }
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+  });
+  foundInfo.appendChild(a);
+  foundInfo.appendChild(document.createTextNode(' '));
+  foundInfo.appendChild(btn);
+}
+
+async function extractReddit(input) {
+  const u = input.trim();
+  if (!u) { foundInfo.textContent = ''; return; }
+  // Already a direct image URL: preview -> original, strip sizing params.
+  if (/preview\.redd\.it|i\.redd\.it/.test(u)) {
+    showDirect(u.replace('preview.redd.it', 'i.redd.it').split('?')[0]);
+    return;
+  }
+  let j = u.split('#')[0].split('?')[0];
+  if (!j.endsWith('/')) j += '/';
+  const tries = [j + '.json', j.replace('www.reddit.com', 'old.reddit.com') + '.json'];
+  let data = null;
+  for (const url of tries) {
+    try {
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      data = await res.json();
+      break;
+    } catch (e) { /* try the next one */ }
+  }
+  if (!data) { foundInfo.textContent = 'Couldn\u2019t read that post.'; return; }
+  try {
+    const post = data[0].data.children[0].data;
+    let out = [];
+    if (post.is_gallery && post.media_metadata) {
+      for (const item of (post.gallery_data && post.gallery_data.items) || []) {
+        const m = post.media_metadata[item.media_id];
+        if (m && m.s && m.s.u) out.push(unesc(m.s.u));
+      }
+    }
+    if (!out.length && post.url && /\.(png|jpe?g|gif|webp)$/i.test(post.url)) out.push(post.url);
+    if (!out.length && post.url && post.url.includes('i.redd.it')) out.push(post.url);
+    if (!out.length && post.preview && post.preview.images && post.preview.images[0] && post.preview.images[0].source) {
+      out.push(unesc(post.preview.images[0].source.url));
+    }
+    if (!out.length) { foundInfo.textContent = 'No direct image found in that post.'; return; }
+    if (out.length === 1) { showDirect(out[0]); return; }
+    foundInfo.innerHTML = '';
+    out.forEach((url, i) => {
+      const a = document.createElement('a');
+      a.href = url; a.textContent = url; a.target = '_blank'; a.rel = 'noopener'; a.className = 'mono';
+      foundInfo.appendChild(a);
+      if (i < out.length - 1) foundInfo.appendChild(document.createElement('br'));
+    });
+  } catch (e) { foundInfo.textContent = 'Couldn\u2019t read that post.'; }
+}
+
+let finderTimer;
+redditUrl.addEventListener('input', () => {
+  clearTimeout(finderTimer);
+  finderTimer = setTimeout(() => extractReddit(redditUrl.value), 500);
+});
+redditUrl.addEventListener('change', () => extractReddit(redditUrl.value));
 </script>
 </body>
 </html>
