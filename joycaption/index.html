@@ -108,12 +108,15 @@
   }
   details { margin-top: 32px; }
   details summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; }
+  table.guide { border-collapse: collapse; width: 100%; font-size: .95rem; margin: 12px 0; }
+  table.guide th, table.guide td { border: 1px solid rgba(127,127,127,.4); padding: 6px 8px; text-align: left; vertical-align: top; }
+  table.guide th { white-space: nowrap; }
   footer { margin-top: 32px; font-size: .85rem; opacity: .6; }
 </style>
 </head>
 <body>
-<h1>JoyCaption captions</h1>
-<p class="sub">Free, uncensored image captions from JoyCaption Beta One. The model runs locally, so there is no queue and nothing is uploaded to any website. This page is the front end: it sends each image to a local server and displays the caption the model returns.</p>
+<h1>JoyCaption Beta One</h1>
+<p class="sub">Image-captioning model &nbsp;·&nbsp; build mb3500zp — free, uncensored image captions. The model runs locally, so there is no queue and nothing is uploaded to any website. This page is the front end: it sends each image to a local server and displays the caption the model returns.</p>
 
 <div class="row">
   <input type="text" id="serverUrl" value="http://127.0.0.1:8080" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Caption server address">
@@ -254,6 +257,48 @@
 </div>
 
 <div id="queue"></div>
+
+<details id="guide">
+  <summary>Quick-start and caption types</summary>
+  <h2>Quick-start</h2>
+  <ol>
+    <li><strong>Upload, drop, or paste</strong> an image — or a whole folder — in the panel above.</li>
+    <li>Pick a <strong>Caption Type</strong> and, if you wish, adjust the <strong>Caption Length</strong>.</li>
+    <li>(Optional) expand the “Extra Options” section and tick any boxes that should influence the caption.</li>
+    <li>(Optional) open <em>Generation settings</em> to adjust <code>temperature</code>, <code>top-p</code>, or <code>max tokens</code>.</li>
+    <li>Press <strong>Caption all</strong>. The prompt sent to the model appears in the <em>Prompt</em> box (editable), and each caption appears under its image.</li>
+  </ol>
+
+  <h2>Caption Types</h2>
+  <table class="guide">
+    <tr><th>Mode</th><th>What it does</th></tr>
+    <tr><td><strong>Descriptive</strong></td><td>Formal, detailed prose description.</td></tr>
+    <tr><td><strong>Descriptive&nbsp;(Casual)</strong></td><td>Similar to Descriptive but with a friendlier, conversational tone.</td></tr>
+    <tr><td><strong>Straightforward</strong></td><td>Objective, no fluff, and more succinct than Descriptive.</td></tr>
+    <tr><td><strong>Stable Diffusion Prompt</strong></td><td>Reverse-engineers a prompt that could have produced the image in a SD/T2I model.<br><em>⚠︎ Experimental – can glitch ≈ 3% of the time.</em></td></tr>
+    <tr><td><strong>MidJourney</strong></td><td>Same idea as above but tuned to MidJourney’s prompt style.<br><em>⚠︎ Experimental – can glitch ≈ 3% of the time.</em></td></tr>
+    <tr><td><strong>Danbooru tag list</strong></td><td>Comma-separated tags strictly following Danbooru conventions (artist:, copyright:, etc.). Lower-case underscores only.<br><em>⚠︎ Experimental – can glitch ≈ 3% of the time.</em></td></tr>
+    <tr><td><strong>e621 tag list</strong></td><td>Alphabetical, namespaced tags in e621 style – includes species/meta tags when relevant.<br><em>⚠︎ Experimental – can glitch ≈ 3% of the time.</em></td></tr>
+    <tr><td><strong>Rule34 tag list</strong></td><td>Rule34 style alphabetical tag dump; artist/copyright/character prefixes first.<br><em>⚠︎ Experimental – can glitch ≈ 3% of the time.</em></td></tr>
+    <tr><td><strong>Booru-like tag list</strong></td><td>Looser tag list when you want labels but not a specific Booru format.<br><em>⚠︎ Experimental – can glitch ≈ 3% of the time.</em></td></tr>
+    <tr><td><strong>Art Critic</strong></td><td>Paragraph of art-historical commentary: composition, symbolism, style, lighting, movement, etc.</td></tr>
+    <tr><td><strong>Product Listing</strong></td><td>Short marketing copy as if selling the depicted object.</td></tr>
+    <tr><td><strong>Social Media Post</strong></td><td>Catchy caption aimed at platforms like Instagram or BlueSky.</td></tr>
+  </table>
+  <p><strong>Note on Booru modes:</strong> They’re tuned for anime-style / illustration imagery; accuracy drops on real-world photographs or highly abstract artwork.</p>
+
+  <h3>Extra Options</h3>
+  <p>These check-boxes fine-tune what the model should or should not mention: lighting, camera angle, aesthetic rating, profanity, etc. Toggle them before hitting <strong>Caption all</strong>; the prompt box will update instantly.</p>
+
+  <h3>Generation settings</h3>
+  <ul>
+    <li><strong>Temperature</strong> – randomness. 0&nbsp;=&nbsp;deterministic; higher =&nbsp;more variety.</li>
+    <li><strong>Top-p</strong> – nucleus sampling cutoff. Lower =&nbsp;safer, higher =&nbsp;freer.</li>
+    <li><strong>Max&nbsp;New Tokens</strong> – hard stop for the model’s output length.</li>
+  </ul>
+
+  <p>On the Hugging Face Space, the “Help improve JoyCaption” box logs only your text prompt — never images — to a public dataset. This page has no such box: captions never leave your computer, so there is nothing to log.</p>
+</details>
 
 <details id="setup">
   <summary>Setup — run JoyCaption locally (once)</summary>
