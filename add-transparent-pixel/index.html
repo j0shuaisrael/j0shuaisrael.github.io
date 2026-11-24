@@ -89,7 +89,7 @@
 </div>
 
 <div class="finder">
-  <input type="text" id="redditUrl" placeholder="Reddit post link" spellcheck="false" autocomplete="off" autocapitalize="off">
+  <input type="text" id="redditUrl" placeholder="Reddit link" spellcheck="false" autocomplete="off" autocapitalize="off">
   <div class="info" id="foundInfo"></div>
 </div>
 
@@ -208,8 +208,6 @@ goBtn.addEventListener('click', () => {
 const redditUrl = document.getElementById('redditUrl');
 const foundInfo = document.getElementById('foundInfo');
 
-function unesc(s) { return s.replace(/&amp;/g, '&'); }
-
 function showDirect(url) {
   foundInfo.innerHTML = '';
   const a = document.createElement('a');
@@ -240,43 +238,19 @@ async function extractReddit(input) {
     showDirect(u.replace('preview.redd.it', 'i.redd.it').split('?')[0]);
     return;
   }
-  let j = u.split('#')[0].split('?')[0];
-  if (!j.endsWith('/')) j += '/';
-  const tries = [j + '.json', j.replace('www.reddit.com', 'old.reddit.com') + '.json'];
-  let data = null;
-  for (const url of tries) {
-    try {
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      data = await res.json();
-      break;
-    } catch (e) { /* try the next one */ }
+  // A Reddit post URL can't be read from this page — Reddit blocks the
+  // request outright (fetch and script both fail), so there is no way to
+  // turn a post link into its image link here. Point at the working flow.
+  if (/reddit\.com\/r\/[^/]+\/comments\//.test(u) || /reddit\.com\/comments\//.test(u)) {
+    foundInfo.textContent = 'Reddit won\u2019t let this page read a post. In the post, long-press the image, copy its address, and paste that here instead.';
+    return;
   }
-  if (!data) { foundInfo.textContent = 'Couldn\u2019t read that post.'; return; }
-  try {
-    const post = data[0].data.children[0].data;
-    let out = [];
-    if (post.is_gallery && post.media_metadata) {
-      for (const item of (post.gallery_data && post.gallery_data.items) || []) {
-        const m = post.media_metadata[item.media_id];
-        if (m && m.s && m.s.u) out.push(unesc(m.s.u));
-      }
-    }
-    if (!out.length && post.url && /\.(png|jpe?g|gif|webp)$/i.test(post.url)) out.push(post.url);
-    if (!out.length && post.url && post.url.includes('i.redd.it')) out.push(post.url);
-    if (!out.length && post.preview && post.preview.images && post.preview.images[0] && post.preview.images[0].source) {
-      out.push(unesc(post.preview.images[0].source.url));
-    }
-    if (!out.length) { foundInfo.textContent = 'No direct image found in that post.'; return; }
-    if (out.length === 1) { showDirect(out[0]); return; }
-    foundInfo.innerHTML = '';
-    out.forEach((url, i) => {
-      const a = document.createElement('a');
-      a.href = url; a.textContent = url; a.target = '_blank'; a.rel = 'noopener'; a.className = 'mono';
-      foundInfo.appendChild(a);
-      if (i < out.length - 1) foundInfo.appendChild(document.createElement('br'));
-    });
-  } catch (e) { foundInfo.textContent = 'Couldn\u2019t read that post.'; }
+  // Any other direct image link: show it as-is.
+  if (/^https?:\/\/\S+\.(png|jpe?g|gif|webp)$/i.test(u.split('?')[0])) {
+    showDirect(u.split('?')[0]);
+    return;
+  }
+  foundInfo.textContent = '';
 }
 
 let finderTimer;
