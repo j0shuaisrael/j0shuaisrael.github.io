@@ -59,6 +59,26 @@
     padding: 6px 0; font-size: .9rem; cursor: pointer;
   }
   .os-slider button.active { color: #fff; }
+  textarea {
+    font: inherit; padding: 8px 10px; border-radius: 10px; border: 1px solid #888;
+    background: transparent; color: inherit; box-sizing: border-box; width: 100%;
+  }
+  .extra label {
+    display: flex; gap: 8px; align-items: flex-start;
+    margin: 0 0 8px; font-size: .95rem; font-weight: 400;
+  }
+  .extra input[type="checkbox"] { flex: none; margin-top: 3px; }
+  .gen-row { display: flex; gap: 8px; align-items: center; margin: 0 0 4px; }
+  .gen-row label { flex: none; width: 130px; margin: 0; font-size: .95rem; }
+  .gen-row input[type="range"] { flex: 1; min-width: 0; }
+  .gen-row input[type="number"] { width: 84px; flex: none; }
+  .gen-row button.reset {
+    flex: none; padding: 4px 10px; font-size: .9rem;
+    background: transparent; color: inherit; border: 1px solid #888; border-radius: 8px;
+  }
+  .gen-info { font-size: .85rem; opacity: .7; margin: 0 0 12px; }
+  details.opts { margin-top: 16px; }
+  details.opts summary { cursor: pointer; font-weight: 600; font-size: 1rem; }
   .item {
     border: 1px solid #888; border-radius: 12px;
     padding: 12px; margin: 12px 0;
@@ -102,20 +122,122 @@
 </div>
 <div class="info" id="serverInfo"></div>
 
-<label>Caption style
+<label>Caption Type
   <select id="style">
-    <option value="descriptive" selected>Descriptive caption (long, detailed)</option>
-    <option value="straightforward">Straightforward caption (concise, objective)</option>
-    <option value="sd">Stable Diffusion prompt</option>
-    <option value="midjourney">MidJourney prompt</option>
+    <option value="descriptive" selected>Descriptive</option>
+    <option value="descriptive_casual">Descriptive (Casual)</option>
+    <option value="straightforward">Straightforward</option>
+    <option value="sd">Stable Diffusion Prompt</option>
+    <option value="midjourney">MidJourney</option>
     <option value="danbooru">Danbooru tag list</option>
     <option value="e621">e621 tag list</option>
     <option value="rule34">Rule34 tag list</option>
+    <option value="booru">Booru-like tag list</option>
+    <option value="artcritic">Art Critic</option>
+    <option value="product">Product Listing</option>
+    <option value="social">Social Media Post</option>
   </select>
 </label>
 
-<label>Max words (optional — leave blank for the model’s default length)
-  <input type="number" id="wordCount" min="10" max="400" placeholder="e.g. 150">
+<label>Caption Length
+  <select id="length">
+    <option value="any">any</option>
+    <option value="very short">very short</option>
+    <option value="short">short</option>
+    <option value="medium-length">medium-length</option>
+    <option value="long" selected>long</option>
+    <option value="very long">very long</option>
+    <option value="20">20</option>
+    <option value="30">30</option>
+    <option value="40">40</option>
+    <option value="50">50</option>
+    <option value="60">60</option>
+    <option value="70">70</option>
+    <option value="80">80</option>
+    <option value="90">90</option>
+    <option value="100">100</option>
+    <option value="110">110</option>
+    <option value="120">120</option>
+    <option value="130">130</option>
+    <option value="140">140</option>
+    <option value="150">150</option>
+    <option value="160">160</option>
+    <option value="170">170</option>
+    <option value="180">180</option>
+    <option value="190">190</option>
+    <option value="200">200</option>
+    <option value="210">210</option>
+    <option value="220">220</option>
+    <option value="230">230</option>
+    <option value="240">240</option>
+    <option value="250">250</option>
+    <option value="260">260</option>
+  </select>
+</label>
+
+<details class="opts" id="extraOpts">
+  <summary>Extra Options</summary>
+  <p style="font-size:.95rem">Select one or more — ticked boxes are added to the prompt.</p>
+  <div class="extra" id="extraList">
+    <label><input type="checkbox">If there is a person/character in the image you must refer to them as {name}.</label>
+    <label><input type="checkbox">Do NOT include information about people/characters that cannot be changed (like ethnicity, gender, etc), but do still include changeable attributes (like hair style).</label>
+    <label><input type="checkbox">Include information about lighting.</label>
+    <label><input type="checkbox">Include information about camera angle.</label>
+    <label><input type="checkbox">Include information about whether there is a watermark or not.</label>
+    <label><input type="checkbox">Include information about whether there are JPEG artifacts or not.</label>
+    <label><input type="checkbox">If it is a photo you MUST include information about what camera was likely used and details such as aperture, shutter speed, ISO, etc.</label>
+    <label><input type="checkbox">Do NOT include anything sexual; keep it PG.</label>
+    <label><input type="checkbox">Do NOT mention the image's resolution.</label>
+    <label><input type="checkbox">You MUST include information about the subjective aesthetic quality of the image from low to very high.</label>
+    <label><input type="checkbox">Include information on the image's composition style, such as leading lines, rule of thirds, or symmetry.</label>
+    <label><input type="checkbox">Do NOT mention any text that is in the image.</label>
+    <label><input type="checkbox">Specify the depth of field and whether the background is in focus or blurred.</label>
+    <label><input type="checkbox">If applicable, mention the likely use of artificial or natural lighting sources.</label>
+    <label><input type="checkbox">Do NOT use any ambiguous language.</label>
+    <label><input type="checkbox">Include whether the image is sfw, suggestive, or nsfw.</label>
+    <label><input type="checkbox">ONLY describe the most important elements of the image.</label>
+    <label><input type="checkbox">If it is a work of art, do not include the artist's name or the title of the work.</label>
+    <label><input type="checkbox">Identify the image orientation (portrait, landscape, or square) and aspect ratio if obvious.</label>
+    <label><input type="checkbox">Use vulgar slang and profanity, such as (but not limited to) "fucking," "slut," "cock," etc.</label>
+    <label><input type="checkbox">Do NOT use polite euphemisms—lean into blunt, casual phrasing.</label>
+    <label><input type="checkbox">Include information about the ages of any people/characters when applicable.</label>
+    <label><input type="checkbox">Mention whether the image depicts an extreme close-up, close-up, medium close-up, medium shot, cowboy shot, medium wide shot, wide shot, or extreme wide shot.</label>
+    <label><input type="checkbox">Do not mention the mood/feeling/etc of the image.</label>
+    <label><input type="checkbox">Explicitly specify the vantage height (eye-level, low-angle worm’s-eye, bird’s-eye, drone, rooftop, etc.).</label>
+    <label><input type="checkbox">If there is a watermark, you must mention it.</label>
+    <label><input type="checkbox">Your response will be used by a text-to-image model, so avoid useless meta phrases like “This image shows…”, "You are looking at...", etc.</label>
+  </div>
+  <label id="nameRow" style="display:none">Person / Character Name
+    <input type="text" id="nameInput" placeholder="Name" autocomplete="off">
+  </label>
+</details>
+
+<details class="opts" id="genSettings">
+  <summary>Generation settings</summary>
+  <div class="gen-row">
+    <label for="tempRange">Temperature</label>
+    <input type="range" id="tempRange" min="0" max="2" step="0.05" value="0.6">
+    <input type="number" id="tempNum" min="0" max="2" step="0.05" value="0.6">
+    <button type="button" class="reset" id="tempReset" title="Reset to default value">↺</button>
+  </div>
+  <p class="gen-info">Higher values make the output more random, lower values make it more deterministic.</p>
+  <div class="gen-row">
+    <label for="topPRange">Top-p</label>
+    <input type="range" id="topPRange" min="0" max="1" step="0.01" value="0.9">
+    <input type="number" id="topPNum" min="0" max="1" step="0.01" value="0.9">
+    <button type="button" class="reset" id="topPReset" title="Reset to default value">↺</button>
+  </div>
+  <div class="gen-row">
+    <label for="maxTokRange">Max New Tokens</label>
+    <input type="range" id="maxTokRange" min="1" max="2048" step="1" value="512">
+    <input type="number" id="maxTokNum" min="1" max="2048" step="1" value="512">
+    <button type="button" class="reset" id="maxTokReset" title="Reset to default value">↺</button>
+  </div>
+  <p class="gen-info">Maximum number of tokens to generate. The model will stop generating if it reaches this limit.</p>
+</details>
+
+<label>Prompt
+  <textarea id="promptBox" rows="4" spellcheck="false"></textarea>
 </label>
 
 <div id="drop" role="button" tabindex="0">
@@ -154,7 +276,17 @@ const serverPill = document.getElementById('serverPill');
 const serverInfo = document.getElementById('serverInfo');
 const checkServerBtn = document.getElementById('checkServer');
 const styleSelect = document.getElementById('style');
-const wordCountInput = document.getElementById('wordCount');
+const lengthSelect = document.getElementById('length');
+const extraList = document.getElementById('extraList');
+const nameRow = document.getElementById('nameRow');
+const nameInput = document.getElementById('nameInput');
+const promptBox = document.getElementById('promptBox');
+const tempRange = document.getElementById('tempRange');
+const tempNum = document.getElementById('tempNum');
+const topPRange = document.getElementById('topPRange');
+const topPNum = document.getElementById('topPNum');
+const maxTokRange = document.getElementById('maxTokRange');
+const maxTokNum = document.getElementById('maxTokNum');
 const drop = document.getElementById('drop');
 const fileInput = document.getElementById('file');
 const info = document.getElementById('info');
@@ -168,43 +300,166 @@ let queue = [];   // {id, file, name, thumbUrl, dataUrl, status, caption, el}
 let nextId = 1;
 let captioning = false;
 
-// --- JoyCaption Beta One prompts, exactly as the model was trained on ---
-function buildPrompt() {
-  const style = styleSelect.value;
-  const wc = wordCountInput.value ? parseInt(wordCountInput.value, 10) : null;
-  const n = (wc && wc > 0) ? wc : null;
-  switch (style) {
-    case 'descriptive':
-      return n
-        ? 'Write a detailed description for this image in ' + n + ' words or less.'
-        : 'Write a long detailed description for this image.';
-    case 'straightforward':
-      return n
-        ? 'Write a straightforward caption for this image within ' + n + ' words. Begin with the main subject and medium. Mention pivotal elements—people, objects, scenery—using confident, definite language. Focus on concrete details like color, shape, texture, and spatial relationships. Show how elements interact. Omit mood and speculative wording. If text is present, quote it exactly. Note any watermarks, signatures, or compression artifacts. Never mention what’s absent, resolution, or unobservable details. Vary your sentence structure and keep the description concise, without starting with “This image is…” or similar phrasing.'
-        : 'Write a straightforward caption for this image. Begin with the main subject and medium. Mention pivotal elements—people, objects, scenery—using confident, definite language. Focus on concrete details like color, shape, texture, and spatial relationships. Show how elements interact. Omit mood and speculative wording. If text is present, quote it exactly. Note any watermarks, signatures, or compression artifacts. Never mention what’s absent, resolution, or unobservable details. Vary your sentence structure and keep the description concise, without starting with “This image is…” or similar phrasing.';
-    case 'sd':
-      return n
-        ? 'Output a stable diffusion prompt that is indistinguishable from a real stable diffusion prompt. ' + n + ' words or less.'
-        : 'Output a stable diffusion prompt that is indistinguishable from a real stable diffusion prompt.';
-    case 'midjourney':
-      return n
-        ? 'Write a MidJourney prompt for this image within ' + n + ' words.'
-        : 'Write a MidJourney prompt for this image.';
-    case 'danbooru':
-      return n
-        ? 'Generate only comma-separated Danbooru tags (lowercase_underscores). Strict order: `artist:`, `copyright:`, `character:`, `meta:`, then general tags. Include counts (1girl), appearance, clothing, accessories, pose, expression, actions, background. Use precise Danbooru syntax. No extra text. ' + n + ' words or less.'
-        : 'Generate only comma-separated Danbooru tags (lowercase_underscores). Strict order: `artist:`, `copyright:`, `character:`, `meta:`, then general tags. Include counts (1girl), appearance, clothing, accessories, pose, expression, actions, background. Use precise Danbooru syntax. No extra text.';
-    case 'e621':
-      return n
-        ? 'Write a comma-separated list of e621 tags in alphabetical order for this image. Start with the artist, copyright, character, species, meta, and lore tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', \'species:\', \'meta:\', and \'lore:\'. Then all the general tags. Keep it under ' + n + ' words.'
-        : 'Write a comma-separated list of e621 tags in alphabetical order for this image. Start with the artist, copyright, character, species, meta, and lore tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', \'species:\', \'meta:\', and \'lore:\'. Then all the general tags.';
-    case 'rule34':
-      return n
-        ? 'Write a comma-separated list of rule34 tags in alphabetical order for this image. Start with the artist, copyright, character, and meta tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', and \'meta:\'. Then all the general tags. Keep it under ' + n + ' words.'
-        : 'Write a comma-separated list of rule34 tags in alphabetical order for this image. Start with the artist, copyright, character, and meta tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', and \'meta:\'. Then all the general tags.';
-  }
-  return 'Write a long detailed description for this image.';
+// --- JoyCaption Beta One prompts, exactly as the Space builds them ---
+// Each caption type has three templates: [0] no length limit ("any"),
+// [1] a numeric word count, [2] a named length ("long", "very short", ...).
+// Extra Options are appended to the prompt, in the order ticked.
+const CAPTION_TYPE_MAP = {
+  descriptive: [
+    'Write a detailed description for this image.',
+    'Write a detailed description for this image in {word_count} words or less.',
+    'Write a {length} detailed description for this image.'
+  ],
+  descriptive_casual: [
+    'Write a descriptive caption for this image in a casual tone.',
+    'Write a descriptive caption for this image in a casual tone within {word_count} words.',
+    'Write a {length} descriptive caption for this image in a casual tone.'
+  ],
+  straightforward: [
+    'Write a straightforward caption for this image. Begin with the main subject and medium. Mention pivotal elements—people, objects, scenery—using confident, definite language. Focus on concrete details like color, shape, texture, and spatial relationships. Show how elements interact. Omit mood and speculative wording. If text is present, quote it exactly. Note any watermarks, signatures, or compression artifacts. Never mention what’s absent, resolution, or unobservable details. Vary your sentence structure and keep the description concise, without starting with “This image is…” or similar phrasing.',
+    'Write a straightforward caption for this image within {word_count} words. Begin with the main subject and medium. Mention pivotal elements—people, objects, scenery—using confident, definite language. Focus on concrete details like color, shape, texture, and spatial relationships. Show how elements interact. Omit mood and speculative wording. If text is present, quote it exactly. Note any watermarks, signatures, or compression artifacts. Never mention what’s absent, resolution, or unobservable details. Vary your sentence structure and keep the description concise, without starting with “This image is…” or similar phrasing.',
+    'Write a {length} straightforward caption for this image. Begin with the main subject and medium. Mention pivotal elements—people, objects, scenery—using confident, definite language. Focus on concrete details like color, shape, texture, and spatial relationships. Show how elements interact. Omit mood and speculative wording. If text is present, quote it exactly. Note any watermarks, signatures, or compression artifacts. Never mention what’s absent, resolution, or unobservable details. Vary your sentence structure and keep the description concise, without starting with “This image is…” or similar phrasing.'
+  ],
+  sd: [
+    'Output a stable diffusion prompt that is indistinguishable from a real stable diffusion prompt.',
+    'Output a stable diffusion prompt that is indistinguishable from a real stable diffusion prompt. {word_count} words or less.',
+    'Output a {length} stable diffusion prompt that is indistinguishable from a real stable diffusion prompt.'
+  ],
+  midjourney: [
+    'Write a MidJourney prompt for this image.',
+    'Write a MidJourney prompt for this image within {word_count} words.',
+    'Write a {length} MidJourney prompt for this image.'
+  ],
+  danbooru: [
+    'Generate only comma-separated Danbooru tags (lowercase_underscores). Strict order: `artist:`, `copyright:`, `character:`, `meta:`, then general tags. Include counts (1girl), appearance, clothing, accessories, pose, expression, actions, background. Use precise Danbooru syntax. No extra text.',
+    'Generate only comma-separated Danbooru tags (lowercase_underscores). Strict order: `artist:`, `copyright:`, `character:`, `meta:`, then general tags. Include counts (1girl), appearance, clothing, accessories, pose, expression, actions, background. Use precise Danbooru syntax. No extra text. {word_count} words or less.',
+    'Generate only comma-separated Danbooru tags (lowercase_underscores). Strict order: `artist:`, `copyright:`, `character:`, `meta:`, then general tags. Include counts (1girl), appearance, clothing, accessories, pose, expression, actions, background. Use precise Danbooru syntax. No extra text. {length} length.'
+  ],
+  e621: [
+    'Write a comma-separated list of e621 tags in alphabetical order for this image. Start with the artist, copyright, character, species, meta, and lore tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', \'species:\', \'meta:\', and \'lore:\'. Then all the general tags.',
+    'Write a comma-separated list of e621 tags in alphabetical order for this image. Start with the artist, copyright, character, species, meta, and lore tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', \'species:\', \'meta:\', and \'lore:\'. Then all the general tags. Keep it under {word_count} words.',
+    'Write a {length} comma-separated list of e621 tags in alphabetical order for this image. Start with the artist, copyright, character, species, meta, and lore tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', \'species:\', \'meta:\', and \'lore:\'. Then all the general tags.'
+  ],
+  rule34: [
+    'Write a comma-separated list of rule34 tags in alphabetical order for this image. Start with the artist, copyright, character, and meta tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', and \'meta:\'. Then all the general tags.',
+    'Write a comma-separated list of rule34 tags in alphabetical order for this image. Start with the artist, copyright, character, and meta tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', and \'meta:\'. Then all the general tags. Keep it under {word_count} words.',
+    'Write a {length} comma-separated list of rule34 tags in alphabetical order for this image. Start with the artist, copyright, character, and meta tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', and \'meta:\'. Then all the general tags.'
+  ],
+  booru: [
+    'Write a list of Booru-like tags for this image.',
+    'Write a list of Booru-like tags for this image within {word_count} words.',
+    'Write a {length} list of Booru-like tags for this image.'
+  ],
+  artcritic: [
+    'Analyze this image like an art critic would with information about its composition, style, symbolism, the use of color, light, any artistic movement it might belong to, etc.',
+    'Analyze this image like an art critic would with information about its composition, style, symbolism, the use of color, light, any artistic movement it might belong to, etc. Keep it within {word_count} words.',
+    'Analyze this image like an art critic would with information about its composition, style, symbolism, the use of color, light, any artistic movement it might belong to, etc. Keep it {length}.'
+  ],
+  product: [
+    'Write a caption for this image as though it were a product listing.',
+    'Write a caption for this image as though it were a product listing. Keep it under {word_count} words.',
+    'Write a {length} caption for this image as though it were a product listing.'
+  ],
+  social: [
+    'Write a caption for this image as if it were being used for a social media post.',
+    'Write a caption for this image as if it were being used for a social media post. Limit the caption to {word_count} words.',
+    'Write a {length} caption for this image as if it were being used for a social media post.'
+  ]
+};
+
+// Extra Options, in the Space's order. A ticked box appends its text to the prompt.
+const EXTRA_OPTIONS = [
+  'If there is a person/character in the image you must refer to them as {name}.',
+  'Do NOT include information about people/characters that cannot be changed (like ethnicity, gender, etc), but do still include changeable attributes (like hair style).',
+  'Include information about lighting.',
+  'Include information about camera angle.',
+  'Include information about whether there is a watermark or not.',
+  'Include information about whether there are JPEG artifacts or not.',
+  'If it is a photo you MUST include information about what camera was likely used and details such as aperture, shutter speed, ISO, etc.',
+  'Do NOT include anything sexual; keep it PG.',
+  'Do NOT mention the image\'s resolution.',
+  'You MUST include information about the subjective aesthetic quality of the image from low to very high.',
+  'Include information on the image\'s composition style, such as leading lines, rule of thirds, or symmetry.',
+  'Do NOT mention any text that is in the image.',
+  'Specify the depth of field and whether the background is in focus or blurred.',
+  'If applicable, mention the likely use of artificial or natural lighting sources.',
+  'Do NOT use any ambiguous language.',
+  'Include whether the image is sfw, suggestive, or nsfw.',
+  'ONLY describe the most important elements of the image.',
+  'If it is a work of art, do not include the artist\'s name or the title of the work.',
+  'Identify the image orientation (portrait, landscape, or square) and aspect ratio if obvious.',
+  'Use vulgar slang and profanity, such as (but not limited to) "fucking," "slut," "cock," etc.',
+  'Do NOT use polite euphemisms—lean into blunt, casual phrasing.',
+  'Include information about the ages of any people/characters when applicable.',
+  'Mention whether the image depicts an extreme close-up, close-up, medium close-up, medium shot, cowboy shot, medium wide shot, wide shot, or extreme wide shot.',
+  'Do not mention the mood/feeling/etc of the image.',
+  'Explicitly specify the vantage height (eye-level, low-angle worm’s-eye, bird’s-eye, drone, rooftop, etc.).',
+  'If there is a watermark, you must mention it.',
+  'Your response will be used by a text-to-image model, so avoid useless meta phrases like “This image shows…”, "You are looking at...", etc.'
+];
+
+function selectedExtraOptions() {
+  const boxes = extraList.querySelectorAll('input[type="checkbox"]');
+  const out = [];
+  boxes.forEach((box, i) => { if (box.checked) out.push(EXTRA_OPTIONS[i]); });
+  return out;
 }
+
+function buildPromptText() {
+  const type = styleSelect.value;
+  const length = lengthSelect.value;
+  let idx;
+  if (length === 'any') idx = 0;
+  else if (/^\d+$/.test(length)) idx = 1;
+  else idx = 2;
+  let prompt = CAPTION_TYPE_MAP[type][idx];
+  const extras = selectedExtraOptions();
+  if (extras.length) prompt += ' ' + extras.join(' ');
+  const name = nameInput.value.trim();
+  prompt = prompt.split('{name}').join(name || '{NAME}');
+  prompt = prompt.split('{length}').join(length);
+  prompt = prompt.split('{word_count}').join(length);
+  return prompt;
+}
+
+function updatePromptBox() {
+  promptBox.value = buildPromptText();
+  // Show the name box only when the first Extra Option is ticked.
+  const boxes = extraList.querySelectorAll('input[type="checkbox"]');
+  nameRow.style.display = (boxes.length && boxes[0].checked) ? '' : 'none';
+}
+
+// Rebuild the prompt whenever any of the inputs change, like the Space does.
+styleSelect.addEventListener('change', updatePromptBox);
+lengthSelect.addEventListener('change', updatePromptBox);
+extraList.addEventListener('change', updatePromptBox);
+nameInput.addEventListener('input', updatePromptBox);
+
+// Generation settings: keep each slider and its number input in sync.
+function bindGen(rangeEl, numEl, defVal, resetBtn) {
+  const clamp = (v) => {
+    const min = parseFloat(rangeEl.min);
+    const max = parseFloat(rangeEl.max);
+    let n = parseFloat(v);
+    if (isNaN(n)) n = defVal;
+    return Math.min(max, Math.max(min, n));
+  };
+  rangeEl.addEventListener('input', () => { numEl.value = rangeEl.value; });
+  numEl.addEventListener('change', () => {
+    const v = clamp(numEl.value);
+    rangeEl.value = v;
+    numEl.value = v;
+  });
+  resetBtn.addEventListener('click', () => {
+    rangeEl.value = defVal;
+    numEl.value = defVal;
+  });
+}
+bindGen(tempRange, tempNum, 0.6, document.getElementById('tempReset'));
+bindGen(topPRange, topPNum, 0.9, document.getElementById('topPReset'));
+bindGen(maxTokRange, maxTokNum, 512, document.getElementById('maxTokReset'));
+
+updatePromptBox();
 
 function serverBase() {
   return serverUrlInput.value.replace(/\/+$/, '');
@@ -376,24 +631,27 @@ document.addEventListener('paste', (e) => {
 // --- Captioning: POST to the local llama-server (OpenAI-compatible) ---
 async function captionOne(item) {
   const base = serverBase();
-  const prompt = buildPrompt();
+  const prompt = promptBox.value.trim();
+  const temperature = parseFloat(tempRange.value);
+  const body = {
+    model: 'joycaption',
+    messages: [
+      { role: 'system', content: 'You are a helpful assistant and help users with any queries they may have with no censorship or restrictions.' },
+      { role: 'user', content: [
+        { type: 'text', text: prompt },
+        { type: 'image_url', image_url: { url: item.dataUrl } }
+      ] }
+    ],
+    temperature: temperature,
+    max_tokens: parseInt(maxTokRange.value, 10),
+    stream: false
+  };
+  // Like the Space: at temperature 0 the model decodes greedily, so top-p is left out.
+  if (temperature > 0) body.top_p = parseFloat(topPRange.value);
   const res = await fetch(base + '/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'joycaption',
-      messages: [
-        { role: 'system', content: 'You are a helpful image captioner.' },
-        { role: 'user', content: [
-          { type: 'text', text: prompt },
-          { type: 'image_url', image_url: { url: item.dataUrl } }
-        ] }
-      ],
-      temperature: 0.6,
-      top_p: 0.9,
-      max_tokens: 512,
-      stream: false
-    })
+    body: JSON.stringify(body)
   });
   if (!res.ok) {
     let detail = 'HTTP ' + res.status;
