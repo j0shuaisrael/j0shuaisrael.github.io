@@ -2,41 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>diag</title>
+<title>diag2</title>
 <style>body{font-family:monospace;white-space:pre-wrap;word-break:break-all}</style>
 </head>
 <body>
 <div id="out">running…</div>
 <script>
-(async () => {
+(function () {
   const out = document.getElementById('out');
   const lines = [];
-  const post = 'https://www.reddit.com/r/pics/comments/1y3ww17/my_grandparents_have_been_together_for_67_years/';
-  const urls = [
-    post + '.json',
-    post.replace('www.reddit.com', 'old.reddit.com') + '.json',
-    'https://api.reddit.com/r/pics/comments/1y3ww17/.json'
-  ];
-  for (const url of urls) {
-    lines.push('URL: ' + url);
+  function done() { out.textContent = lines.join('\n'); }
+  // JSONP test: Reddit .json with ?jsonp= callback, loaded as a <script> (not subject to CORS)
+  window.__cb = function (data) {
+    lines.push('JSONP: callback FIRED');
     try {
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      lines.push('  status: ' + res.status + ' ok: ' + res.ok);
-      lines.push('  content-type: ' + res.headers.get('content-type'));
-      lines.push('  allow-origin: ' + res.headers.get('access-control-allow-origin'));
-      const text = await res.text();
-      lines.push('  body start: ' + text.slice(0, 200).replace(/\n/g, ' '));
-      try {
-        const j = JSON.parse(text);
-        const p = j[0] && j[0].data && j[0].data.children && j[0].data.children[0] && j[0].data.children[0].data;
-        lines.push('  parsed post url: ' + (p ? p.url : '(none)'));
-      } catch (e) { lines.push('  JSON parse failed: ' + e.message); }
-    } catch (e) {
-      lines.push('  FETCH ERROR: ' + e.name + ': ' + e.message);
+      const p = data[0].data.children[0].data;
+      lines.push('JSONP post url: ' + p.url);
+      lines.push('JSONP is_gallery: ' + p.is_gallery);
+    } catch (e) { lines.push('JSONP parse failed: ' + e.message); }
+    done();
+  };
+  const s = document.createElement('script');
+  s.src = 'https://www.reddit.com/r/pics/comments/1y3ww17/my_grandparents_have_been_together_for_67_years/.json?jsonp=__cb';
+  s.onload = function () {
+    setTimeout(function () {
+      if (!window.__cbFired) { lines.push('JSONP: script loaded but callback never fired'); done(); }
+    }, 2000);
+  };
+  s.onerror = function () { lines.push('JSONP: script FAILED to load'); done(); };
+  // mark fired
+  const origCb = window.__cb;
+  window.__cb = function (d) { window.__cbFired = true; origCb(d); };
+  document.head.appendChild(s);
+  // safety timeout
+  setTimeout(function () {
+    if (!window.__cbFired && out.textContent === 'running…') {
+      lines.push('JSONP: timed out, no callback, no error');
+      done();
     }
-    lines.push('');
-  }
-  out.textContent = lines.join('\n');
+  }, 15000);
 })();
 </script>
 </body>
