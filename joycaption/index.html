@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JoyCaption — free uncensored captions, run on your own Mac</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 640px; margin: 0 auto; padding: 24px 16px 64px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  p.sub { margin: 0 0 20px; opacity: .75; }
+  #drop {
+    border: 2px dashed #888; border-radius: 12px;
+    padding: 28px 16px; text-align: center; cursor: pointer;
+  }
+  #drop.drag { border-color: #2f7cf6; background: rgba(47,124,246,.08); }
+  #drop input { display: none; }
+  .info { margin: 16px 0; font-size: .95rem; }
+  .info b { font-weight: 600; }
+  label { display: block; margin: 0 0 12px; font-size: .95rem; }
+  select, input[type="text"], input[type="number"] {
+    font: inherit; padding: 8px 10px; border-radius: 10px; border: 1px solid #888;
+    background: transparent; color: inherit; box-sizing: border-box;
+  }
+  select { width: 100%; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row input[type="text"] { flex: 1; min-width: 200px; }
+  .row input[type="number"] { width: 110px; }
+  button {
+    font: inherit; padding: 10px 18px; border-radius: 10px;
+    border: 1px solid #888; background: #2f7cf6; color: #fff; cursor: pointer;
+  }
+  button:disabled { opacity: .45; cursor: default; }
+  button.secondary { background: transparent; color: inherit; padding: 6px 12px; font-size: .9rem; }
+  .pill {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: .85rem; font-weight: 600;
+  }
+  .pill.on { background: #1a7f37; color: #fff; }
+  .pill.off { background: #b3261e; color: #fff; }
+  .pill.checking { background: #888; color: #fff; }
+  .item {
+    border: 1px solid #888; border-radius: 12px;
+    padding: 12px; margin: 12px 0;
+  }
+  .item .head { display: flex; gap: 12px; align-items: flex-start; }
+  .item img.thumb { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; flex: none; }
+  .item .meta { min-width: 0; flex: 1; }
+  .item .name { font-weight: 600; word-break: break-all; }
+  .item .status { font-size: .9rem; opacity: .8; }
+  .item .caption {
+    margin-top: 10px; white-space: pre-wrap; word-break: break-word;
+    background: rgba(127,127,127,.12); border-radius: 8px; padding: 10px 12px;
+  }
+  .item .actions { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+  button.copybtn {
+    padding: 4px 10px; border-radius: 8px; font-size: .85rem;
+    background: #2f7cf6; color: #fff; border: 1px solid #888; cursor: pointer;
+  }
+  .ok { color: #1a7f37; }
+  .warn { color: #b26a00; }
+  .err { color: #b3261e; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9rem; }
+  pre {
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .85rem;
+    background: rgba(127,127,127,.12); border-radius: 8px; padding: 12px;
+    overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+  }
+  details { margin-top: 32px; }
+  details summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; }
+  footer { margin-top: 32px; font-size: .85rem; opacity: .6; }
+</style>
+</head>
+<body>
+<h1>JoyCaption captions</h1>
+<p class="sub">Free, uncensored image captions from JoyCaption Beta One — the model runs on your own Mac, so there is no queue, no quota, and nothing is uploaded to any website. This page is only the front end: it sends each image to a small server on your computer (localhost) and shows you what the model writes back.</p>
+
+<div class="row">
+  <input type="text" id="serverUrl" value="http://127.0.0.1:8080" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Caption server address">
+  <span class="pill checking" id="serverPill">checking…</span>
+  <button class="secondary" id="checkServer" type="button">Check again</button>
+</div>
+<div class="info" id="serverInfo"></div>
+
+<label>Caption style
+  <select id="style">
+    <option value="descriptive" selected>Descriptive caption (long, detailed)</option>
+    <option value="straightforward">Straightforward caption (concise, objective)</option>
+    <option value="sd">Stable Diffusion prompt</option>
+    <option value="midjourney">MidJourney prompt</option>
+    <option value="danbooru">Danbooru tag list</option>
+    <option value="e621">e621 tag list</option>
+    <option value="rule34">Rule34 tag list</option>
+  </select>
+</label>
+
+<label>Max words (optional — leave blank for the model’s default length)
+  <input type="number" id="wordCount" min="10" max="400" placeholder="e.g. 150">
+</label>
+
+<div id="drop" role="button" tabindex="0">
+  <input type="file" id="file" accept="image/*" multiple>
+  <div>Tap here, drop images, or paste one in — you can queue a whole folder</div>
+</div>
+
+<div class="info" id="info"></div>
+
+<div class="row" style="margin-top:12px">
+  <button id="captionAll" disabled>Caption all</button>
+  <button id="downloadAll" class="secondary" disabled>Download all captions (.txt)</button>
+  <button id="clearAll" class="secondary" disabled>Clear queue</button>
+</div>
+
+<div id="queue"></div>
+
+<details id="setup">
+  <summary>Setup — run JoyCaption on your Mac (once)</summary>
+  <p>The model is JoyCaption Beta One (still the latest release — there is no Beta Two or 1.0 yet). The full-precision model is 16 GB, so this setup uses the <b>IQ4_XS</b> quantized build: 4.48 GB, the best quality for its size, and it fits on an 8 GB Mac. The step-up is Q4_K_M (4.92 GB) if you have 16 GB or more; the smallest is Q2_K (3.18 GB).</p>
+  <p>1. Install llama.cpp (the runner — it uses your Mac’s GPU cores through Metal):</p>
+  <pre>brew install llama.cpp</pre>
+  <p>2. Download these two files into one folder:</p>
+  <p>Model, IQ4_XS (4.48 GB):<br><a class="mono" href="https://huggingface.co/mradermacher/llama-joycaption-beta-one-hf-llava-GGUF/resolve/main/llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf">llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf</a></p>
+  <p>Vision projector, required (0.88 GB):<br><a class="mono" href="https://huggingface.co/concedo/llama-joycaption-beta-one-hf-llava-mmproj-gguf/resolve/main/llama-joycaption-beta-one-llava-mmproj-model-f16.gguf">llama-joycaption-beta-one-llava-mmproj-model-f16.gguf</a></p>
+  <p>3. In Terminal, from that folder, start the server:</p>
+  <pre>llama-server -m llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf --mmproj llama-joycaption-beta-one-llava-mmproj-model-f16.gguf -c 4096 --port 8080</pre>
+  <p>Leave that Terminal window running. Come back here, hit “Check again”, and caption away. The server only listens on your own computer (127.0.0.1), so nobody else can reach it. If your install only has the newer <span class="mono">llama</span> command instead of <span class="mono">llama-server</span>, the same flags work with <span class="mono">llama serve</span> in place of <span class="mono">llama-server</span>.</p>
+  <p>Model: <a href="https://huggingface.co/fancyfeast/llama-joycaption-beta-one-hf-llava">fancyfeast/llama-joycaption-beta-one-hf-llava</a> (Apache-2.0). Demo that ran out of free quota: <a href="https://huggingface.co/spaces/fancyfeast/joy-caption-beta-one">joy-caption-beta-one on Hugging Face</a>.</p>
+</details>
+
+<footer>Images are sent only to your own computer (localhost) — never to this website or any other server. JoyCaption Beta One is free, open weights, and uncensored by design: equal coverage of SFW and NSFW concepts.</footer>
+
+<script>
+const serverUrlInput = document.getElementById('serverUrl');
+const serverPill = document.getElementById('serverPill');
+const serverInfo = document.getElementById('serverInfo');
+const checkServerBtn = document.getElementById('checkServer');
+const styleSelect = document.getElementById('style');
+const wordCountInput = document.getElementById('wordCount');
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file');
+const info = document.getElementById('info');
+const captionAllBtn = document.getElementById('captionAll');
+const downloadAllBtn = document.getElementById('downloadAll');
+const clearAllBtn = document.getElementById('clearAll');
+const queueEl = document.getElementById('queue');
+const setupEl = document.getElementById('setup');
+
+let queue = [];   // {id, file, name, thumbUrl, dataUrl, status, caption, el}
+let nextId = 1;
+let captioning = false;
+
+// --- JoyCaption Beta One prompts, exactly as the model was trained on ---
+function buildPrompt() {
+  const style = styleSelect.value;
+  const wc = wordCountInput.value ? parseInt(wordCountInput.value, 10) : null;
+  const n = (wc && wc > 0) ? wc : null;
+  switch (style) {
+    case 'descriptive':
+      return n
+        ? 'Write a detailed description for this image in ' + n + ' words or less.'
+        : 'Write a long detailed description for this image.';
+    case 'straightforward':
+      return n
+        ? 'Write a straightforward caption for this image within ' + n + ' words. Begin with the main subject and medium. Mention pivotal elements—people, objects, scenery—using confident, definite language. Focus on concrete details like color, shape, texture, and spatial relationships. Show how elements interact. Omit mood and speculative wording. If text is present, quote it exactly. Note any watermarks, signatures, or compression artifacts. Never mention what’s absent, resolution, or unobservable details. Vary your sentence structure and keep the description concise, without starting with “This image is…” or similar phrasing.'
+        : 'Write a straightforward caption for this image. Begin with the main subject and medium. Mention pivotal elements—people, objects, scenery—using confident, definite language. Focus on concrete details like color, shape, texture, and spatial relationships. Show how elements interact. Omit mood and speculative wording. If text is present, quote it exactly. Note any watermarks, signatures, or compression artifacts. Never mention what’s absent, resolution, or unobservable details. Vary your sentence structure and keep the description concise, without starting with “This image is…” or similar phrasing.';
+    case 'sd':
+      return n
+        ? 'Output a stable diffusion prompt that is indistinguishable from a real stable diffusion prompt. ' + n + ' words or less.'
+        : 'Output a stable diffusion prompt that is indistinguishable from a real stable diffusion prompt.';
+    case 'midjourney':
+      return n
+        ? 'Write a MidJourney prompt for this image within ' + n + ' words.'
+        : 'Write a MidJourney prompt for this image.';
+    case 'danbooru':
+      return n
+        ? 'Generate only comma-separated Danbooru tags (lowercase_underscores). Strict order: `artist:`, `copyright:`, `character:`, `meta:`, then general tags. Include counts (1girl), appearance, clothing, accessories, pose, expression, actions, background. Use precise Danbooru syntax. No extra text. ' + n + ' words or less.'
+        : 'Generate only comma-separated Danbooru tags (lowercase_underscores). Strict order: `artist:`, `copyright:`, `character:`, `meta:`, then general tags. Include counts (1girl), appearance, clothing, accessories, pose, expression, actions, background. Use precise Danbooru syntax. No extra text.';
+    case 'e621':
+      return n
+        ? 'Write a comma-separated list of e621 tags in alphabetical order for this image. Start with the artist, copyright, character, species, meta, and lore tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', \'species:\', \'meta:\', and \'lore:\'. Then all the general tags. Keep it under ' + n + ' words.'
+        : 'Write a comma-separated list of e621 tags in alphabetical order for this image. Start with the artist, copyright, character, species, meta, and lore tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', \'species:\', \'meta:\', and \'lore:\'. Then all the general tags.';
+    case 'rule34':
+      return n
+        ? 'Write a comma-separated list of rule34 tags in alphabetical order for this image. Start with the artist, copyright, character, and meta tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', and \'meta:\'. Then all the general tags. Keep it under ' + n + ' words.'
+        : 'Write a comma-separated list of rule34 tags in alphabetical order for this image. Start with the artist, copyright, character, and meta tags (if any), prefixed by \'artist:\', \'copyright:\', \'character:\', and \'meta:\'. Then all the general tags.';
+  }
+  return 'Write a long detailed description for this image.';
+}
+
+function serverBase() {
+  return serverUrlInput.value.replace(/\/+$/, '');
+}
+
+async function checkServer() {
+  const base = serverBase();
+  serverPill.textContent = 'checking…';
+  serverPill.className = 'pill checking';
+  serverInfo.textContent = '';
+  try {
+    const res = await fetch(base + '/health', { method: 'GET' });
+    if (res.ok) {
+      serverPill.textContent = 'Server online';
+      serverPill.className = 'pill on';
+      serverInfo.innerHTML = '<span class="ok">Connected to JoyCaption on this computer.</span>';
+      setupEl.open = false;
+      return true;
+    }
+    throw new Error('HTTP ' + res.status);
+  } catch (e) {
+    serverPill.textContent = 'Server offline';
+    serverPill.className = 'pill off';
+    serverInfo.innerHTML = '<span class="err">No caption server at <span class="mono">' + base + '</span>. Start it (see Setup below), then hit “Check again”.</span>';
+    setupEl.open = true;
+    return false;
+  }
+}
+
+checkServerBtn.addEventListener('click', checkServer);
+serverUrlInput.addEventListener('change', checkServer);
+
+// --- Image loading: downscale to max 1024px, JPEG, base64 ---
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        const maxSide = 1024;
+        const scale = Math.min(1, maxSide / Math.max(im.naturalWidth, im.naturalHeight));
+        const w = Math.max(1, Math.round(im.naturalWidth * scale));
+        const h = Math.max(1, Math.round(im.naturalHeight * scale));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(im, 0, 0, w, h);
+        resolve({ dataUrl: c.toDataURL('image/jpeg', 0.85), width: w, height: h });
+      };
+      im.onerror = () => reject(new Error('Could not read that image.'));
+      im.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error('Could not read that file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function thumbUrl(file) {
+  return URL.createObjectURL(file);
+}
+
+function renderQueue() {
+  queueEl.innerHTML = '';
+  queue.forEach((item) => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    const head = document.createElement('div');
+    head.className = 'head';
+    const thumb = document.createElement('img');
+    thumb.className = 'thumb';
+    thumb.src = item.thumbUrl;
+    thumb.alt = item.name;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const name = document.createElement('div');
+    name.className = 'name';
+    name.textContent = item.name;
+    const status = document.createElement('div');
+    status.className = 'status';
+    status.textContent = item.status;
+    meta.appendChild(name);
+    meta.appendChild(status);
+    head.appendChild(thumb);
+    head.appendChild(meta);
+    div.appendChild(head);
+    if (item.caption) {
+      const cap = document.createElement('div');
+      cap.className = 'caption';
+      cap.textContent = item.caption;
+      div.appendChild(cap);
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'copybtn';
+      copyBtn.textContent = 'Copy caption';
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(item.caption);
+          copyBtn.textContent = 'Copied';
+        } catch (e) {
+          const r = document.createRange();
+          r.selectNodeContents(cap);
+          const sel = getSelection();
+          sel.removeAllRanges();
+          sel.addRange(r);
+          try { document.execCommand('copy'); copyBtn.textContent = 'Copied'; } catch (_) {}
+        }
+        setTimeout(() => { copyBtn.textContent = 'Copy caption'; }, 1500);
+      });
+      actions.appendChild(copyBtn);
+      div.appendChild(actions);
+    }
+    item.el = div;
+    item.statusEl = status;
+    queueEl.appendChild(div);
+  });
+  const hasItems = queue.length > 0;
+  const hasCaptions = queue.some((q) => q.caption);
+  captionAllBtn.disabled = !hasItems || captioning;
+  downloadAllBtn.disabled = !hasCaptions;
+  clearAllBtn.disabled = !hasItems || captioning;
+}
+
+function setItemStatus(item, text) {
+  item.status = text;
+  if (item.statusEl) item.statusEl.textContent = text;
+}
+
+async function addFiles(files) {
+  const images = Array.from(files || []).filter((f) => f && f.type && f.type.startsWith('image/'));
+  if (!images.length) {
+    info.innerHTML = '<span class="warn">No image files in that drop.</span>';
+    return;
+  }
+  for (const file of images) {
+    try {
+      const prepared = await fileToDataUrl(file);
+      queue.push({
+        id: nextId++,
+        file: file,
+        name: file.name || ('image-' + nextId),
+        thumbUrl: thumbUrl(file),
+        dataUrl: prepared.dataUrl,
+        status: 'Queued — ' + prepared.width + ' × ' + prepared.height + ' px (sent to the model at this size)',
+        caption: ''
+      });
+    } catch (e) {
+      info.innerHTML = '<span class="err">' + (file.name || 'An image') + ': ' + e.message + '</span>';
+    }
+  }
+  info.textContent = queue.length + (queue.length === 1 ? ' image' : ' images') + ' queued.';
+  renderQueue();
+}
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+fileInput.addEventListener('change', () => { addFiles(fileInput.files); fileInput.value = ''; });
+drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('drag'); addFiles(e.dataTransfer.files); });
+document.addEventListener('paste', (e) => {
+  const files = Array.from((e.clipboardData || {}).items || [])
+    .filter((it) => it.type && it.type.startsWith('image/'))
+    .map((it) => it.getAsFile())
+    .filter(Boolean);
+  if (files.length) addFiles(files);
+});
+
+// --- Captioning: POST to the local llama-server (OpenAI-compatible) ---
+async function captionOne(item) {
+  const base = serverBase();
+  const prompt = buildPrompt();
+  const res = await fetch(base + '/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'joycaption',
+      messages: [
+        { role: 'system', content: 'You are a helpful image captioner.' },
+        { role: 'user', content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: item.dataUrl } }
+        ] }
+      ],
+      temperature: 0.6,
+      top_p: 0.9,
+      max_tokens: 512,
+      stream: false
+    })
+  });
+  if (!res.ok) {
+    let detail = 'HTTP ' + res.status;
+    try {
+      const err = await res.json();
+      if (err && err.error && err.error.message) detail = err.error.message;
+    } catch (_) {}
+    throw new Error(detail);
+  }
+  const data = await res.json();
+  const text = data && data.choices && data.choices[0] && data.choices[0].message
+    ? (data.choices[0].message.content || '').trim()
+    : '';
+  if (!text) throw new Error('The model returned an empty caption — try again.');
+  return text;
+}
+
+captionAllBtn.addEventListener('click', async () => {
+  if (captioning || !queue.length) return;
+  captioning = true;
+  renderQueue();
+  const online = await checkServer();
+  if (!online) {
+    info.innerHTML = '<span class="err">The caption server is not running. Start it (see Setup below), then try again.</span>';
+    captioning = false;
+    renderQueue();
+    return;
+  }
+  for (const item of queue) {
+    if (item.caption) continue;
+    setItemStatus(item, 'Captioning…');
+    try {
+      item.caption = await captionOne(item);
+      setItemStatus(item, 'Done');
+    } catch (e) {
+      setItemStatus(item, 'Failed: ' + e.message);
+    }
+    renderQueue();
+  }
+  captioning = false;
+  renderQueue();
+  const done = queue.filter((q) => q.caption).length;
+  info.innerHTML = done
+    ? '<span class="ok">' + done + ' of ' + queue.length + ' captioned.</span>'
+    : '<span class="err">Nothing captioned — check the server and try again.</span>';
+});
+
+downloadAllBtn.addEventListener('click', () => {
+  const parts = queue.filter((q) => q.caption).map((q) => q.name + '\n' + q.caption);
+  if (!parts.length) return;
+  const blob = new Blob([parts.join('\n\n')], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'joycaption-captions.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+});
+
+clearAllBtn.addEventListener('click', () => {
+  queue.forEach((q) => { if (q.thumbUrl) URL.revokeObjectURL(q.thumbUrl); });
+  queue = [];
+  info.textContent = '';
+  renderQueue();
+});
+
+checkServer();
+</script>
+</body>
+</html>
