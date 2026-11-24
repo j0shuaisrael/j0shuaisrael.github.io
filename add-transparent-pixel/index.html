@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Add a Transparent Pixel — keep your PNG a PNG</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 640px; margin: 0 auto; padding: 24px 16px 64px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  p.sub { margin: 0 0 20px; opacity: .75; }
+  #drop {
+    border: 2px dashed #888; border-radius: 12px;
+    padding: 28px 16px; text-align: center; cursor: pointer;
+  }
+  #drop.drag { border-color: #2f7cf6; background: rgba(47,124,246,.08); }
+  #drop input { display: none; }
+  .info { margin: 16px 0; font-size: .95rem; }
+  .info b { font-weight: 600; }
+  button {
+    font: inherit; padding: 10px 18px; border-radius: 10px;
+    border: 1px solid #888; background: #2f7cf6; color: #fff; cursor: pointer;
+  }
+  button:disabled { opacity: .45; cursor: default; }
+  .preview {
+    margin-top: 16px; display: none;
+  }
+  .preview .box {
+    background-image:
+      linear-gradient(45deg, #bbb 25%, transparent 25%),
+      linear-gradient(-45deg, #bbb 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #bbb 75%),
+      linear-gradient(-45deg, transparent 75%, #bbb 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    background-color: #888;
+    border-radius: 8px; padding: 0; display: inline-block;
+  }
+  .preview img { display: block; max-width: 100%; height: auto; }
+  a.download {
+    display: inline-block; margin-top: 12px; font: inherit;
+    padding: 10px 18px; border-radius: 10px; text-decoration: none;
+    border: 1px solid #888; background: #2f7cf6; color: #fff;
+  }
+  .ok { color: #1a7f37; }
+  .warn { color: #b26a00; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9rem; }
+  footer { margin-top: 32px; font-size: .85rem; opacity: .6; }
+</style>
+</head>
+<body>
+<h1>Add a transparent pixel</h1>
+<p class="sub">Reddit converts opaque PNGs to JPEG. A PNG with any transparent pixel keeps its alpha channel, so Reddit leaves it as a PNG. This page sets one single pixel — the very last pixel of the image, the bottom-right corner — to transparent. The image stays exactly the same size, and every other pixel stays exactly the same. Everything runs in your browser; nothing is uploaded.</p>
+
+<div id="drop" role="button" tabindex="0">
+  <input type="file" id="file" accept="image/*">
+  <div>Tap here or drop an image to load it</div>
+</div>
+
+<div class="info" id="info"></div>
+
+<button id="go" disabled>Add the transparent pixel</button>
+
+<div class="preview" id="preview">
+  <div class="info" id="outInfo"></div>
+  <div class="box"><img id="outImg" alt="Processed image preview"></div>
+  <br>
+  <a class="download" id="dl" href="#" download>Download PNG</a>
+</div>
+
+<footer>Tip: if the image already has transparency, Reddit should already keep it as a PNG — no need to run it through this.</footer>
+
+<script>
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file');
+const info = document.getElementById('info');
+const goBtn = document.getElementById('go');
+const preview = document.getElementById('preview');
+const outInfo = document.getElementById('outInfo');
+const outImg = document.getElementById('outImg');
+const dl = document.getElementById('dl');
+
+let img = null;        // loaded HTMLImageElement
+let fileName = '';
+let origSize = 0;
+
+function fmtBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1048576).toFixed(2) + ' MB';
+}
+
+function hasAlpha(image) {
+  const c = document.createElement('canvas');
+  c.width = image.naturalWidth; c.height = image.naturalHeight;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(image, 0, 0);
+  const d = ctx.getImageData(0, 0, c.width, c.height).data;
+  for (let i = 3; i < d.length; i += 4) {
+    if (d[i] < 255) return true;
+  }
+  return false;
+}
+
+function loadFile(file) {
+  if (!file || !file.type.startsWith('image/')) {
+    info.innerHTML = '<span class="warn">That doesn\u2019t look like an image file.</span>';
+    return;
+  }
+  fileName = file.name.replace(/\.[^.]+$/, '');
+  origSize = file.size;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const im = new Image();
+    im.onload = () => {
+      img = im;
+      const alpha = hasAlpha(im);
+      info.innerHTML =
+        'Loaded <b>' + file.name + '</b><br>' +
+        'Size: <span class="mono">' + im.naturalWidth + ' \u00d7 ' + im.naturalHeight + ' px, ' + fmtBytes(origSize) + '</span><br>' +
+        (alpha
+          ? '<span class="ok">Already has transparency \u2014 Reddit should already keep this as a PNG.</span>'
+          : '<span class="warn">No transparency found \u2014 Reddit will convert this to JPEG.</span>');
+      goBtn.disabled = false;
+      preview.style.display = 'none';
+    };
+    im.onerror = () => { info.innerHTML = '<span class="warn">Couldn\u2019t read that image.</span>'; };
+    im.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+fileInput.addEventListener('change', () => loadFile(fileInput.files[0]));
+drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', (e) => {
+  e.preventDefault(); drop.classList.remove('drag');
+  loadFile(e.dataTransfer.files[0]);
+});
+
+goBtn.addEventListener('click', () => {
+  if (!img) return;
+  const out = document.createElement('canvas');
+  out.width = img.naturalWidth;
+  out.height = img.naturalHeight;        // size stays exactly the same
+  const ctx = out.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  ctx.clearRect(out.width - 1, out.height - 1, 1, 1);  // one pixel, the very last one (bottom-right corner)
+  out.toBlob((blob) => {
+    if (!blob) { outInfo.textContent = 'Export failed.'; return; }
+    const url = URL.createObjectURL(blob);
+    outImg.src = url;
+    const outName = fileName + '-transparent.png';
+    dl.href = url;
+    dl.download = outName;
+    dl.textContent = 'Download ' + outName;
+    outInfo.innerHTML =
+      '<span class="ok">Done \u2014 the very last pixel (bottom-right corner) is now transparent.</span><br>' +
+      'Size unchanged: <span class="mono">' + out.width + ' \u00d7 ' + out.height + ' px, ' + fmtBytes(blob.size) + '</span><br>' +
+      'Alpha channel present, so Reddit should keep this file as a PNG.';
+    preview.style.display = 'block';
+    preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 'image/png');
+});
+</script>
+</body>
+</html>
