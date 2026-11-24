@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JoyCaption — free uncensored captions, run on your own Mac</title>
+<title>JoyCaption — free uncensored image captions</title>
 <style>
   :root { color-scheme: light dark; }
   body {
@@ -43,6 +43,22 @@
   .pill.on { background: #1a7f37; color: #fff; }
   .pill.off { background: #b3261e; color: #fff; }
   .pill.checking { background: #888; color: #fff; }
+  .os-slider {
+    display: flex; position: relative;
+    border: 1px solid #888; border-radius: 999px; padding: 3px;
+    margin: 12px 0;
+  }
+  .os-slider .os-thumb {
+    position: absolute; top: 3px; bottom: 3px; left: 3px; width: 0;
+    border-radius: 999px; background: #2f7cf6;
+    transition: left .2s ease, width .2s ease;
+  }
+  .os-slider button {
+    flex: 1; position: relative; z-index: 1;
+    background: transparent; border: none; color: inherit;
+    padding: 6px 0; font-size: .9rem; cursor: pointer;
+  }
+  .os-slider button.active { color: #fff; }
   .item {
     border: 1px solid #888; border-radius: 12px;
     padding: 12px; margin: 12px 0;
@@ -77,7 +93,7 @@
 </head>
 <body>
 <h1>JoyCaption captions</h1>
-<p class="sub">Free, uncensored image captions from JoyCaption Beta One — the model runs on your own Mac, so there is no queue, no quota, and nothing is uploaded to any website. This page is only the front end: it sends each image to a small server on your computer (localhost) and shows you what the model writes back.</p>
+<p class="sub">Free, uncensored image captions from JoyCaption Beta One. The model runs locally, so there is no queue and nothing is uploaded to any website. This page is the front end: it sends each image to a local server and displays the caption the model returns.</p>
 
 <div class="row">
   <input type="text" id="serverUrl" value="http://127.0.0.1:8080" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Caption server address">
@@ -118,20 +134,19 @@
 <div id="queue"></div>
 
 <details id="setup">
-  <summary>Setup — run JoyCaption on your Mac (once)</summary>
-  <p>The model is JoyCaption Beta One (still the latest release — there is no Beta Two or 1.0 yet). The full-precision model is 16 GB, so this setup uses the <b>IQ4_XS</b> quantized build: 4.48 GB, the best quality for its size, and it fits on an 8 GB Mac. The step-up is Q4_K_M (4.92 GB) if you have 16 GB or more; the smallest is Q2_K (3.18 GB).</p>
-  <p>1. Install llama.cpp (the runner — it uses your Mac’s GPU cores through Metal):</p>
-  <pre>brew install llama.cpp</pre>
-  <p>2. Download these two files into one folder:</p>
-  <p>Model, IQ4_XS (4.48 GB):<br><a class="mono" href="https://huggingface.co/mradermacher/llama-joycaption-beta-one-hf-llava-GGUF/resolve/main/llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf">llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf</a></p>
-  <p>Vision projector, required (0.88 GB):<br><a class="mono" href="https://huggingface.co/concedo/llama-joycaption-beta-one-hf-llava-mmproj-gguf/resolve/main/llama-joycaption-beta-one-llava-mmproj-model-f16.gguf">llama-joycaption-beta-one-llava-mmproj-model-f16.gguf</a></p>
-  <p>3. In Terminal, from that folder, start the server:</p>
-  <pre>llama-server -m llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf --mmproj llama-joycaption-beta-one-llava-mmproj-model-f16.gguf -c 4096 --port 8080</pre>
-  <p>Leave that Terminal window running. Come back here, hit “Check again”, and caption away. The server only listens on your own computer (127.0.0.1), so nobody else can reach it. If your install only has the newer <span class="mono">llama</span> command instead of <span class="mono">llama-server</span>, the same flags work with <span class="mono">llama serve</span> in place of <span class="mono">llama-server</span>.</p>
-  <p>Model: <a href="https://huggingface.co/fancyfeast/llama-joycaption-beta-one-hf-llava">fancyfeast/llama-joycaption-beta-one-hf-llava</a> (Apache-2.0). Demo that ran out of free quota: <a href="https://huggingface.co/spaces/fancyfeast/joy-caption-beta-one">joy-caption-beta-one on Hugging Face</a>.</p>
+  <summary>Setup — run JoyCaption locally (once)</summary>
+  <p>Model: JoyCaption Beta One (current release). The full-precision model is 16 GB, so this setup uses the <b>IQ4_XS</b> quantized build (4.48 GB), a balance of quality and size that fits on a machine with 8 GB of memory. Q4_K_M (4.92 GB) is the higher-quality option for machines with 16 GB or more; Q2_K (3.18 GB) is the smallest.</p>
+  <div class="os-slider" id="osSlider" role="tablist" aria-label="Operating system">
+    <span class="os-thumb" id="osThumb"></span>
+    <button type="button" data-os="windows" role="tab">Windows</button>
+    <button type="button" data-os="macos" role="tab">macOS</button>
+    <button type="button" data-os="linux" role="tab">Linux</button>
+  </div>
+  <div id="osSteps"></div>
+  <p>Model: <a href="https://huggingface.co/fancyfeast/llama-joycaption-beta-one-hf-llava">fancyfeast/llama-joycaption-beta-one-hf-llava</a> (Apache-2.0). Online demo: <a href="https://huggingface.co/spaces/fancyfeast/joy-caption-beta-one">joy-caption-beta-one on Hugging Face</a>.</p>
 </details>
 
-<footer>Images are sent only to your own computer (localhost) — never to this website or any other server. JoyCaption Beta One is free, open weights, and uncensored by design: equal coverage of SFW and NSFW concepts.</footer>
+<footer>Images are sent only to the local computer (localhost) — never to this website or any other server. JoyCaption Beta One is free, open weights, and uncensored by design: equal coverage of SFW and NSFW concepts.</footer>
 
 <script>
 const serverUrlInput = document.getElementById('serverUrl');
@@ -213,7 +228,7 @@ async function checkServer() {
   } catch (e) {
     serverPill.textContent = 'Server offline';
     serverPill.className = 'pill off';
-    serverInfo.innerHTML = '<span class="err">No caption server at <span class="mono">' + base + '</span>. Start it (see Setup below), then hit “Check again”.</span>';
+    serverInfo.innerHTML = '<span class="err">No caption server found at <span class="mono">' + base + '</span>. Follow the setup below, then press “Check again”.</span>';
     setupEl.open = true;
     return false;
   }
@@ -402,7 +417,7 @@ captionAllBtn.addEventListener('click', async () => {
   renderQueue();
   const online = await checkServer();
   if (!online) {
-    info.innerHTML = '<span class="err">The caption server is not running. Start it (see Setup below), then try again.</span>';
+    info.innerHTML = '<span class="err">The caption server is not running. Follow the setup below, then try again.</span>';
     captioning = false;
     renderQueue();
     return;
@@ -445,6 +460,75 @@ clearAllBtn.addEventListener('click', () => {
   info.textContent = '';
   renderQueue();
 });
+
+// --- Setup instructions per operating system ---
+const osSlider = document.getElementById('osSlider');
+const osThumb = document.getElementById('osThumb');
+const osStepsEl = document.getElementById('osSteps');
+const osButtons = Array.from(osSlider.querySelectorAll('button[data-os]'));
+const MODEL_LINK = '<a class="mono" href="https://huggingface.co/mradermacher/llama-joycaption-beta-one-hf-llava-GGUF/resolve/main/llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf">llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf</a>';
+const MMPROJ_LINK = '<a class="mono" href="https://huggingface.co/concedo/llama-joycaption-beta-one-hf-llava-mmproj-gguf/resolve/main/llama-joycaption-beta-one-llava-mmproj-model-f16.gguf">llama-joycaption-beta-one-llava-mmproj-model-f16.gguf</a>';
+const RELEASES_LINK = '<a href="https://github.com/ggml-org/llama.cpp/releases">llama.cpp releases page</a>';
+const OS_STEPS = {
+  windows: `
+  <p>1. Install llama.cpp (the runner). In PowerShell:</p>
+  <pre>winget install llama.cpp</pre>
+  <p>For an NVIDIA GPU, the fastest option is a prebuilt CUDA build from the ${RELEASES_LINK} instead: download the <span class="mono">llama-&lt;build&gt;-bin-win-cuda-12.4-x64.zip</span> binary package plus the matching <span class="mono">cudart-llama-bin-win-cuda-12.4-x64.zip</span> runtime, and extract both into the same folder.</p>
+  <p>2. Download these two files into one folder:</p>
+  <p>Model, IQ4_XS (4.48 GB):<br>${MODEL_LINK}</p>
+  <p>Vision projector, required (0.88 GB):<br>${MMPROJ_LINK}</p>
+  <p>3. In PowerShell, from that folder, start the server:</p>
+  <pre>llama-server.exe -m llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf --mmproj llama-joycaption-beta-one-llava-mmproj-model-f16.gguf -c 4096 --port 8080</pre>
+  <p>Keep the PowerShell window running while captioning. Then return to this page and press “Check again”. The server listens only on the local computer (127.0.0.1), so it is not reachable from elsewhere. If the install provides only the newer <span class="mono">llama</span> command instead of <span class="mono">llama-server</span>, the same flags work with <span class="mono">llama.exe serve</span> in place of <span class="mono">llama-server.exe</span>.</p>`,
+  macos: `
+  <p>1. Install llama.cpp (the runner — it uses Apple silicon through Metal):</p>
+  <pre>brew install llama.cpp</pre>
+  <p>2. Download these two files into one folder:</p>
+  <p>Model, IQ4_XS (4.48 GB):<br>${MODEL_LINK}</p>
+  <p>Vision projector, required (0.88 GB):<br>${MMPROJ_LINK}</p>
+  <p>3. In Terminal, from that folder, start the server:</p>
+  <pre>llama-server -m llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf --mmproj llama-joycaption-beta-one-llava-mmproj-model-f16.gguf -c 4096 --port 8080</pre>
+  <p>Keep the Terminal window running while captioning. Then return to this page and press “Check again”. The server listens only on the local computer (127.0.0.1), so it is not reachable from elsewhere. If the install provides only the newer <span class="mono">llama</span> command instead of <span class="mono">llama-server</span>, the same flags work with <span class="mono">llama serve</span> in place of <span class="mono">llama-server</span>.</p>`,
+  linux: `
+  <p>1. Install llama.cpp (the runner). Download the prebuilt binary for the machine from the ${RELEASES_LINK} — <span class="mono">llama-&lt;build&gt;-bin-ubuntu-x64.tar.gz</span> for most PCs (CPU), or the <span class="mono">-cuda-</span> / <span class="mono">-vulkan-</span> build for a GPU — and extract it:</p>
+  <pre>tar xzf llama-&lt;build&gt;-bin-ubuntu-x64.tar.gz</pre>
+  <p>On Ubuntu/Debian, a fresh system may also need <span class="mono">sudo apt install libgomp1</span>. With Homebrew already installed, <span class="mono">brew install llama.cpp</span> works instead.</p>
+  <p>2. Download these two files into one folder:</p>
+  <p>Model, IQ4_XS (4.48 GB):<br>${MODEL_LINK}</p>
+  <p>Vision projector, required (0.88 GB):<br>${MMPROJ_LINK}</p>
+  <p>3. In a terminal, from that folder (with the llama.cpp binaries on the PATH), start the server:</p>
+  <pre>llama-server -m llama-joycaption-beta-one-hf-llava.IQ4_XS.gguf --mmproj llama-joycaption-beta-one-llava-mmproj-model-f16.gguf -c 4096 --port 8080</pre>
+  <p>Keep the terminal window running while captioning. Then return to this page and press “Check again”. The server listens only on the local computer (127.0.0.1), so it is not reachable from elsewhere. If the install provides only the newer <span class="mono">llama</span> command instead of <span class="mono">llama-server</span>, the same flags work with <span class="mono">llama serve</span> in place of <span class="mono">llama-server</span>.</p>`
+};
+function detectOS() {
+  const ua = navigator.userAgent || '';
+  if (/Windows/i.test(ua)) return 'windows';
+  if (/Macintosh|Mac OS X/i.test(ua)) return 'macos';
+  if (/Linux/i.test(ua)) return 'linux';
+  return 'macos';
+}
+function moveOsThumb(btn) {
+  osThumb.style.left = btn.offsetLeft + 'px';
+  osThumb.style.width = btn.offsetWidth + 'px';
+}
+function setOS(os) {
+  const btn = osButtons.find((b) => b.dataset.os === os) || osButtons[1];
+  osButtons.forEach((b) => b.classList.toggle('active', b === btn));
+  osStepsEl.innerHTML = OS_STEPS[btn.dataset.os];
+  moveOsThumb(btn);
+}
+osButtons.forEach((b) => b.addEventListener('click', () => setOS(b.dataset.os)));
+window.addEventListener('resize', () => {
+  const active = osButtons.find((b) => b.classList.contains('active'));
+  if (active) moveOsThumb(active);
+});
+setupEl.addEventListener('toggle', () => {
+  if (setupEl.open) {
+    const active = osButtons.find((b) => b.classList.contains('active'));
+    if (active) moveOsThumb(active);
+  }
+});
+setOS(detectOS());
 
 checkServer();
 </script>
