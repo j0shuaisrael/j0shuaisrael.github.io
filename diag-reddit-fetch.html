@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>diag</title>
+<style>body{font-family:monospace;white-space:pre-wrap;word-break:break-all}</style>
+</head>
+<body>
+<div id="out">running…</div>
+<script>
+(async () => {
+  const out = document.getElementById('out');
+  const lines = [];
+  const post = 'https://www.reddit.com/r/pics/comments/1y3ww17/my_grandparents_have_been_together_for_67_years/';
+  const urls = [
+    post + '.json',
+    post.replace('www.reddit.com', 'old.reddit.com') + '.json',
+    'https://api.reddit.com/r/pics/comments/1y3ww17/.json'
+  ];
+  for (const url of urls) {
+    lines.push('URL: ' + url);
+    try {
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      lines.push('  status: ' + res.status + ' ok: ' + res.ok);
+      lines.push('  content-type: ' + res.headers.get('content-type'));
+      lines.push('  allow-origin: ' + res.headers.get('access-control-allow-origin'));
+      const text = await res.text();
+      lines.push('  body start: ' + text.slice(0, 200).replace(/\n/g, ' '));
+      try {
+        const j = JSON.parse(text);
+        const p = j[0] && j[0].data && j[0].data.children && j[0].data.children[0] && j[0].data.children[0].data;
+        lines.push('  parsed post url: ' + (p ? p.url : '(none)'));
+      } catch (e) { lines.push('  JSON parse failed: ' + e.message); }
+    } catch (e) {
+      lines.push('  FETCH ERROR: ' + e.name + ': ' + e.message);
+    }
+    lines.push('');
+  }
+  out.textContent = lines.join('\n');
+})();
+</script>
+</body>
+</html>
