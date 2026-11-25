@@ -12,6 +12,12 @@
   h2 { font-size: 20px; margin: 36px 0 8px; }
   p { margin: 0 0 14px; }
   a { color: #1d4e89; }
+  form { margin: 0 0 14px; }
+  label { display: block; font-size: 14px; color: #6b675e; margin: 16px 0 6px; }
+  textarea, input[type="email"] { display: block; width: 100%; box-sizing: border-box; font: inherit; color: #1c1c1a; background: #fff; border: 1px solid #e3dfd6; border-radius: 8px; padding: 10px 12px; }
+  textarea { resize: vertical; min-height: 120px; }
+  button { margin-top: 16px; font: inherit; color: #fbfaf7; background: #232220; border: 0; border-radius: 8px; padding: 10px 20px; cursor: pointer; }
+  #contact-status { color: #6b675e; font-size: 14px; margin-top: 12px; }
   footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e3dfd6; color: #6b675e; font-size: 14px; }
 </style>
 </head>
@@ -41,7 +47,31 @@
   <p>If this policy changes, the new version will be posted here with a new effective date. Because Split collects nothing, a change here can only ever narrow what the app does, not expand it.</p>
 
   <h2>Contact</h2>
-  <p>Questions about this policy: open an issue at <a href="https://github.com/j0shuaisrael/j0shuaisrael.github.io/issues">github.com/j0shuaisrael/j0shuaisrael.github.io/issues</a>.</p>
+  <p>Questions about this policy, or about Split? Send a message — it goes straight to the developer. Your email address is never shown on this page.</p>
+  <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
+    <input type="hidden" name="access_key" value="0f0f48ca-de8c-4795-a363-116af0e0d80c">
+    <input type="hidden" name="subject" value="Split — privacy policy contact">
+    <input type="hidden" name="from_name" value="Split contact form">
+    <label for="contact-message">Message</label>
+    <textarea id="contact-message" name="message" rows="5" required></textarea>
+    <label for="contact-email">Your email (optional — so I can reply)</label>
+    <input id="contact-email" type="email" name="email" placeholder="you@example.com">
+    <button type="submit">Send</button>
+    <p id="contact-status" role="status"></p>
+  </form>
+  <script>
+  document.getElementById('contact-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var status = document.getElementById('contact-status');
+    status.textContent = 'Sending…';
+    try {
+      var res = await fetch(this.action, { method: 'POST', body: new FormData(this) });
+      var data = await res.json();
+      if (data.success) { this.reset(); status.textContent = 'Message sent. Thank you.'; }
+      else { status.textContent = 'Something went wrong — please try again.'; }
+    } catch (err) { status.textContent = 'Something went wrong — please try again.'; }
+  });
+  </script>
 
   <footer>Split · A split-screen browser. No ads. No tracking. No account.</footer>
 </main>
